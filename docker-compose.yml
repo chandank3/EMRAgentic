@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: healthcare_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: healthcare_coordinator
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d healthcare_coordinator"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgvector Extension (PostgreSQL with vector support)
+  postgres-vector:
+    image: ankane/pgvector:latest
+    container_name: healthcare_pgvector
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: healthcare_coordinator
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_vector_data:/var/lib/postgresql/data
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d healthcare_coordinator"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Ollama for Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: healthcare_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    container_name: healthcare_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: healthcare_coordinator_agent
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/healthcare_coordinator
+      PGVECTOR_ENABLED: "true"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: mistral
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+      DEBUG: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  postgres_vector_data:
+  ollama_data:
+  redis_data:
+
+networks:
+  default:
+    name: healthcare_network
