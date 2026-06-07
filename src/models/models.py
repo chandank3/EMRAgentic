@@ -7,7 +7,14 @@ from sqlalchemy import (
     ForeignKey, Table, JSON, Enum as SQLEnum, Float, and_
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB
+from sqlalchemy.types import String, JSON
+
+# Fallback for SQLite
+class UUID(String):
+    def __init__(self, length=36, as_uuid=False, **kwargs):
+        super().__init__(length=36, **kwargs)
+JSONB = JSON
 import uuid
 from src.database import Base
 

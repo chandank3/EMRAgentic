@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, LogOut, Bell, User, Settings, Home, Calendar, FileText, Pill, ClipboardList, Shield, LogCheck } from 'lucide-react';
+import { Menu, X, LogOut, Bell, User, Settings, Home, Calendar, FileText, Pill, ClipboardList, Shield, ClipboardCheck } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Appointments from './pages/Appointments';
 import CarePlans from './pages/CarePlans';
@@ -10,6 +10,7 @@ import AuditLog from './pages/AuditLog';
 import './App.css';
 
 const API_BASE = 'http://127.0.0.1:8000';
+const DEMO_PATIENT_ID = '11111111-1111-1111-1111-111111111111';
 
 function App() {
   const [currentUser, setCurrentUser] = useState({
@@ -37,7 +38,7 @@ function App() {
     { id: 'care-plans', label: 'Care Plans', icon: ClipboardList },
     { id: 'medications', label: 'Medications', icon: Pill },
     { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'approvals', label: 'Approvals', icon: LogCheck },
+    { id: 'approvals', label: 'Approvals', icon: ClipboardCheck },
     { id: 'audit', label: 'Audit Log', icon: Shield },
   ];
 
@@ -53,21 +54,21 @@ function App() {
   const renderPage = () => {
     switch(currentPage) {
       case 'dashboard':
-        return <Dashboard apiBase={API_BASE} />;
+        return <Dashboard apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
       case 'appointments':
-        return <Appointments apiBase={API_BASE} />;
+        return <Appointments apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
       case 'care-plans':
-        return <CarePlans apiBase={API_BASE} />;
+        return <CarePlans apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
       case 'medications':
-        return <Medications apiBase={API_BASE} />;
+        return <Medications apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
       case 'documents':
-        return <Documents apiBase={API_BASE} />;
+        return <Documents apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
       case 'approvals':
         return <Approvals apiBase={API_BASE} />;
       case 'audit':
         return <AuditLog apiBase={API_BASE} />;
       default:
-        return <Dashboard apiBase={API_BASE} />;
+        return <Dashboard apiBase={API_BASE} patientId={DEMO_PATIENT_ID} />;
     }
   };
 
